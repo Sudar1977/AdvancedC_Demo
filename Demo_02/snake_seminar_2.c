@@ -79,20 +79,25 @@ tail_t*  tail  = (tail_t*) malloc(MAX_TAIL_SIZE*sizeof(tail_t));
 void go(struct snake_t *head)
 {
     char ch = '@';
+    int max_x=0, max_y=0;
+    getmaxyx(stdscr, max_y, max_x); // macro - размер терминала
     mvprintw(head->y, head->x, " "); // очищаем один символ
     switch (head->direction)
     {
         case LEFT:
-             mvprintw(head->y, --(head->x), "%c", ch);
+            if(head->x <= 0) // Циклическое движение, чтобы не
+// уходить за пределы экрана
+                head->x = max_x;
+            mvprintw(head->y, --(head->x), "%c", ch);
         break;
         case RIGHT:
-             mvprintw(head->y, ++(head->x), "%c", ch);
+            mvprintw(head->y, ++(head->x), "%c", ch);
         break;
         case UP:
-             mvprintw(--(head->y), head->x, "%c", ch);
+            mvprintw(--(head->y), head->x, "%c", ch);
         break;
         case DOWN:
-             mvprintw(++(head->y), head->x, "%c", ch);
+            mvprintw(++(head->y), head->x, "%c", ch);
         break;
         default:
         break;
