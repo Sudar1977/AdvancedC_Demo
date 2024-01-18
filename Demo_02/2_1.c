@@ -59,7 +59,7 @@ void print_elem(struct list * elem)
         printf("\
 Real address:\t 0x%p\n\
 Int address:\t 0x%p\n\
-Size:\t\t %u\n\
+Size:\t\t %lld\n\
 Comment:\t %s\n\
 Next:\t\t 0x%p\n", elem, elem->address, elem->size, elem->comment, elem->next);
     }
