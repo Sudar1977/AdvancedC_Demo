@@ -39,8 +39,8 @@ void array2struct(int origin[] , struct pack_array *res)
     for (int i =0; i<32; i++)
     {
         res->count1 += origin[i];
-        res->array |= origin[i];
-        i<31?res->array <<=1 : 1;
+        res->array  |= origin[i];
+        i<31 ? res->array<<=1 : 1;
     }
     res -> count0=32-res->count1;
 }
