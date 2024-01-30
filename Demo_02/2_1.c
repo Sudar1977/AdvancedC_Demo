@@ -9,8 +9,8 @@ typedef struct list
     struct list *next;
 }list;
 
-void * findMaxBlock(list *);
-void print_elem(list * );
+list *findMaxBlock(list *);
+void    print_elem(list * );
 
 int main()
 {
@@ -20,10 +20,10 @@ int main()
     test_v[2].size = 100;
     test_v[0].next = test_v+1;
     test_v[1].next = test_v+2;
-    test_v[2].next = (struct list*) NULL;
-    test_v[0].address = &test_v[0];
-    test_v[1].address = &test_v[1];
-    test_v[2].address = &test_v[2];
+    test_v[2].next = NULL;
+    test_v[0].address = &test_v[0];//malloc(test_v[0].size);
+    test_v[1].address = &test_v[1];//malloc(test_v[1].size);
+    test_v[2].address = &test_v[2];//malloc(test_v[2].size);
     strcpy(test_v[0].comment,"main.c");
     strcpy(test_v[1].comment,"main.c");
     strcpy(test_v[2].comment,"main.c");
@@ -31,25 +31,23 @@ int main()
     print_elem(t);
 }
 
-void * findMaxBlock( struct list *head)
+list * findMaxBlock( struct list *head)
 {
-    if( head == (struct list*)NULL)
-    {
-        return (void*) NULL;
-    }
-    struct list * maxaddr = head;
+    if( head == NULL)
+        return  NULL;
+    struct list *maxaddr = head;
     size_t max = head->size;
-    while((struct list *)NULL != head)
+    while(NULL != head)
     {
         if(head->size > max)
         {
             max = head->size;
             maxaddr = head;
         }
- //print_elem(head);
+        //print_elem(head);
         head = head->next;
     }
-    return (void*) maxaddr->address;
+    return maxaddr;
 }
 
 void print_elem(struct list * elem)
