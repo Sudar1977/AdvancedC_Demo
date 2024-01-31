@@ -12,7 +12,7 @@ typedef struct list
 list *findMaxBlock(list *);
 void    print_elem(list * );
 
-int main()
+int main(void)
 {
     list test_v[3] ;
     test_v[0].size = 1000;
@@ -21,17 +21,17 @@ int main()
     test_v[0].next = test_v+1;
     test_v[1].next = test_v+2;
     test_v[2].next = NULL;
-    test_v[0].address = &test_v[0];//malloc(test_v[0].size);
-    test_v[1].address = &test_v[1];//malloc(test_v[1].size);
-    test_v[2].address = &test_v[2];//malloc(test_v[2].size);
+    test_v[0].address = &test_v[0];
+    test_v[1].address = &test_v[1];
+    test_v[2].address = &test_v[2];
     strcpy(test_v[0].comment,"main.c");
     strcpy(test_v[1].comment,"main.c");
     strcpy(test_v[2].comment,"main.c");
-    struct list *t = findMaxBlock(test_v);
+    list *t = findMaxBlock(test_v);
     print_elem(t);
 }
 
-list * findMaxBlock( struct list *head)
+list * findMaxBlock(list *head)
 {
     if( head == NULL)
         return  NULL;
@@ -50,7 +50,7 @@ list * findMaxBlock( struct list *head)
     return maxaddr;
 }
 
-void print_elem(struct list * elem)
+void print_elem(list * elem)
 {
     if(elem != NULL)
     {
