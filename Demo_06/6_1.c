@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -18,6 +17,8 @@ int print_list(struct list*);
 struct list * sort_list(struct list * );
 void delete_list(struct list *);
 
+void choose_sort_array_list(struct list * head);
+void BubbleSortList(struct list * head);
 
 int main(int argc, char** argv)
 {
@@ -53,13 +54,15 @@ int i=0;
         }
     }
 
-#ifdef DEBUG
-    //print_list(w_head);
-#endif
+//~ #ifdef DEBUG
+    print_list(w_head);
+//~ #endif
 
-    w_sorted = sort_list(w_head);
+    //~ w_sorted = sort_list(w_head);
+    choose_sort_array_list(w_head);
 
-    print_list(w_sorted);
+    //~ print_list(w_sorted);
+    print_list(w_head);
 
     delete_list(w_list);
     return 0;
@@ -74,6 +77,82 @@ struct list * n;
         n = c->next;
         free(c);
         c = n;
+    }
+}
+
+// Сортировка выбором
+/*
+ * На первом проходе цикла выбирается минимальный элемент из текущей
+ * последовательности и меняется местами с первым элементом
+ * последовательности. На следующей итерации цикла поиск минимального
+ * элемента осуществляется со второй позиции, после меняется местами
+ * найденный минимальный элемент со вторым в списке.
+ * Такую процедуру выполняем до конца массива, пока он весь не будет
+ * отсортирован.
+ */
+//~ void choose_sort_array(int size, int a[]) {
+    //~ int nMin;
+    //~ for(int i = 0; i <  size-1 ; i ++ ) {
+        //~ for (int j =  i+1; j < size; j ++)
+        //~ if( a[j] < a[nMin] ) {
+            //~ nMin = j;
+        //~ }
+        //~ if( nMin != i ) {
+            //~ swap(&a[i], &a[nMin]);
+        //~ }
+    //~ }
+//~ }
+
+
+// Сортировка выбором
+void choose_sort_array_list(struct list * head)
+{
+//    head=head->next;
+    for(struct list *i = head->next; i; i=i->next)
+    {
+        struct list *nMin = i;
+        printf("i=%s\n",i->word);
+        for (struct list *j = i->next; j; j=j->next)
+        {
+            printf("j=%s\n",j->word);
+            if(strcmp(j->word,nMin->word)<0)
+            {
+                nMin = j;
+                printf("nMin=%s\n",nMin->word);
+            }
+        }
+        if( nMin != i )
+        {
+            swap_elements(head,i,nMin);
+            i=nMin;
+            print_list(head);
+            printf("i1=%s\n",i->next->word);
+        }
+    }
+}
+
+
+
+
+void BubbleSortList(struct list * head)
+{
+    head=head->next;
+    int noSwap;
+    for (struct list *i = head; i; i=i->next)
+    {
+        noSwap = 1;
+        printf("i=%s\n",i->word);
+        for(struct list* j=head; j!=i; j=j->next)
+        {
+            printf("j=%s\n",j->word);
+            //~ if(strcmp(j->word,i->word)>0)
+            //~ {
+               //~ swap_elements (head,i,j);
+               //~ noSwap = 0;
+            //~ }
+        }
+        //~ if(noSwap)
+            //~ break;
     }
 }
 
@@ -128,11 +207,11 @@ struct list * add_to_list(char*origin, struct list * head)
 {
 struct list * res = (struct list*) malloc(sizeof(struct list));
     if(head != NULL)
-    {
-        memcpy(res->word, origin, STR_SIZE);
         head->next = res;
-    }
+    memcpy(res->word, origin, STR_SIZE);
     res->next = (struct list*)NULL;
+    //~ print_list(head);
+    print_list(res);
     return res;
 }
 
