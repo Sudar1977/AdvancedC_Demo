@@ -331,7 +331,7 @@ void update(snake_t *head, struct food f[], int key)
     {
         addTail(head);
         printLevel(head);
-        DELAY -= 0.009;
+        //~ DELAY -= 0.009;
     }
 }
 

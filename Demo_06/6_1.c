@@ -2,35 +2,26 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define STR_SIZE 2000
 
-#define STR_SIZE 200
 
-
-struct list
+typedef struct list
 {
-    char word[STR_SIZE];
+    char* word;
     struct list *next;
-};
+}list;
 
 
-struct list * add_to_list(char*, struct list * );
-void swap_elements (struct list * ,struct list * , struct list *);
-int print_list(struct list*);
-struct list * sort_list(struct list * );
-void delete_list(struct list *);
-
-
-void choose_sort_array_list(struct list * head);
-void BubbleSortList(struct list * head);
-
+/* Без заглавного элемента и без двойного указателя*/
+list* insert2(char* value,list *head);
+void print_list(list * head);
+void choose_sort_array_list(list * head);
+void swap_elements(list *e1,list *e2);
+void delete_list(list *head);
 
 int main(int argc, char** argv)
 {
-struct list * w_list = add_to_list("", (struct list *) NULL);
-struct list * w_head = w_list;
-struct list * w_sorted;
-
-
+list *w_list=NULL;
 char word[STR_SIZE]="";
 int ch = ' ';
 int i=0;
@@ -41,56 +32,42 @@ int i=0;
             case '.':
             case ' ':
                 word[i] = '\0';
-                w_list=add_to_list(word, w_list);
+                w_list  = insert2(word, w_list);
                 i=0;
             break;
-
-
             default:
-                word[i] = ch;
-                i++;
-                if(STR_SIZE == i)
-                {
-                    i=0;//На в/с, во избежание
-                }
+                word[i++] = ch;
+                if(i>=STR_SIZE)
+                    i=0;//Защита от переполнения строки
         }
         if('.' == ch)
-        {
             break;
-        }
     }
 
-
 #ifdef DEBUG
-    print_list(w_head);
+    print_list(w_list);
 #endif
 
 
-    //~ w_sorted = sort_list(w_head);
-    choose_sort_array_list(w_head);
-
-
-    //~ print_list(w_sorted);
-    print_list(w_head);
-
+    choose_sort_array_list(w_list);
+    print_list(w_list);
 
     delete_list(w_list);
     return 0;
 }
 
-
-void delete_list(struct list * l)
+void delete_list(list * l)
 {
-struct list * c =l;
-struct list * n;
-    while(c != (struct list *)NULL)
+list * c =l;
+list * n;
+    while(c != NULL)
     {
         n = c->next;
+        free(c->word);//Очищаем паять под слово
         free(c);
         c = n;
     }
 }
-
 
 // Сортировка выбором
 /*
@@ -102,144 +79,41 @@ struct list * n;
  * Такую процедуру выполняем до конца массива, пока он весь не будет
  * отсортирован.
  */
-//~ void choose_sort_array(int size, int a[]) {
-    //~ int nMin;
-    //~ for(int i = 0; i <  size-1 ; i ++ ) {
-        //~ for (int j =  i+1; j < size; j ++)
-        //~ if( a[j] < a[nMin] ) {
-            //~ nMin = j;
-        //~ }
-        //~ if( nMin != i ) {
-            //~ swap(&a[i], &a[nMin]);
-        //~ }
-    //~ }
-//~ }
-
-
-
-
-// Сортировка выбором
-void choose_sort_array_list(struct list * head)
+void choose_sort_array_list(list * head)
 {
-//    head=head->next;
-    for(struct list *i = head->next; i; i=i->next)
+    for(list *i = head; i->next!=NULL; i=i->next)
     {
-        struct list *nMin = i;
-        //~ printf("i=%s\n",i->word);
-        for (struct list *j = i->next; j; j=j->next)
-        {
-            //~ printf("j=%s\n",j->word);
-            if(strcmp(j->word,nMin->word)<0)
-            {
-                nMin = j;
-                //~ printf("nMin=%s\n",nMin->word);
-            }
-        }
-        if( nMin != i )
-        {
-            swap_elements(head,i,nMin);
-            i=nMin;
-            //~ print_list(head);
-            //~ printf("i1=%s\n",i->next->word);
-        }
+        list *min = i;
+        for (list *j = i->next; j!=NULL; j=j->next)
+            if(strcmp(j->word,min->word)<0)
+                min = j;
+        if( min != i )
+            swap_elements(i,min);
     }
 }
 
 
-
-struct list * sort_list(struct list * head)
+/* Без заглавного элемента и без двойного указателя*/
+list* insert2(char* value,list *head)
 {
-
-
-struct list * res = head;
-struct list * iterator;
-struct list * tmp_res;
-
-
-    head = head->next;
-    res->next = NULL;
-
-
-    while( NULL != head )
-    {
-        iterator = head;
-        head = head->next;
-        if(strcmp(iterator->word, res->word) < 0) // Если текущий элемент меньше, чем первый элемент результата, то результат встаёт после текущего
-        {
-            iterator->next = res;
-            res = iterator;
-        }
-        else //Иначе приходится искать, куда воткнуть текущий элемент в списке-рузультате
-        {
-            tmp_res = res;
-            while( NULL != tmp_res ->next )
-            {
-                if(strcmp(iterator->word, tmp_res->next->word) < 0) //нашли, где текущий элемент больше временного следующего
-                {
-                    break;
-                }
-                tmp_res = tmp_res->next;
-            }
-            iterator->next = tmp_res->next;
-            tmp_res->next = iterator; //не понял
-        }
-// print_list(iterator);
-    }
-// head = res;
-    return res;
+ list *res = (list*)calloc(1,sizeof(list));
+ int len = strlen(value);//определяем размер строки
+ res->word = malloc(len+1);//выделяем память под строку
+ strcpy(res->word, value);//копируем строку в память
+ res->next = head;//смещаем указатель на следующий
+ return res;
 }
 
-
-struct list * add_to_list(char*origin, struct list * head)
+void swap_elements(list * e1, list *e2)
 {
-struct list * res = (struct list*) malloc(sizeof(struct list));
-    if(head != NULL)
-        head->next = res;
-    memcpy(res->word, origin, STR_SIZE);
-    res->next = (struct list*)NULL;
-    //~ print_list(head);
-    //~ print_list(res);
-    return res;
+char* tmp    = e1->word;//просто меняем указатели на строки
+    e1->word = e2->word;
+    e2->word = tmp;
 }
 
-
-void swap_elements (struct list * head, struct list * e1, struct list *e2)
+void print_list(list * head)
 {
-struct list * tmp;
-char done=0;
-    tmp = e1->next;
-    e1->next = e2->next;
-    e2->next = tmp;
-
-
-    for (tmp = head; done !=2 && (struct list * )NULL != tmp->next; tmp = tmp->next )
-    {
-        if(tmp->next == e1)
-        {
-            tmp->next = e2;
-            done++;
-        }
-        else if(tmp->next == e2)
-        {
-            tmp->next = e1;
-            done++;
-        }
-    }
-}
-
-
-int print_list(struct list * e)
-{
-int i=0;
-struct list *l = e->next ;
-
-
-    while(l != (struct list *)NULL)
-    {
-        printf("%s ", l->word);
-        l = l->next;
-        i++;
-    }
+    for (list* i = head; i!=NULL; i=i->next)
+        printf("%s ", i->word);
     putchar('\n');
-    return i;
 }
