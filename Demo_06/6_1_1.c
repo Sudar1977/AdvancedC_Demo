@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define STR_SIZE 20
+#define STR_SIZE 2000
 
 
 typedef struct list
@@ -16,25 +16,14 @@ void delete_list(struct list *);
 
 /* Без заглавного элемента и без двойного указателя*/
 list* insert2(char* value,list *head);
-void print_list1(list * head);
+void print_list(list * head);
 void choose_sort_array_list(struct list * head);
+void  swap(list *p1, list *p2);
+void swap_elements2(struct list * e1, struct list *e2);
 
 int main(int argc, char** argv)
 {
-//~ struct list *w_list = add_to_list("",NULL);
-//~ struct list *w_head = w_list;
-
-                //~ print_list(w_head);
-                //~ print_list1(w_head);
-
-
-list *w_list1 = insert2("",NULL);
-//~ struct list *w_list1 = add_to_list("",NULL);
-//~ struct list *w_head1 = w_list1;
-
-                //~ print_list(w_head1);
-                //~ print_list1(w_head1);
-
+list *w_list=NULL;// = insert2("",NULL);
 char word[STR_SIZE]="";
 int ch = ' ';
 int i=0;
@@ -45,12 +34,8 @@ int i=0;
             case '.':
             case ' ':
                 word[i] = '\0';
-                //~ w_list=add_to_list(word, w_list);
-                //~ print_list(w_head);
-                //~ print_list1(w_head);
-                //~ w_list1=add_to_list(word, w_list1);
-                w_list1=insert2(word, w_list1);
-                print_list1(w_list1);
+                w_list=insert2(word, w_list);
+                print_list(w_list);
                 i=0;
             break;
 
@@ -69,14 +54,14 @@ int i=0;
     }
 
 #ifdef DEBUG
-    print_list1(w_list1);
+    print_list(w_list);
 #endif
 
 
-    choose_sort_array_list(w_list1);
-    print_list1(w_list1);
+    choose_sort_array_list(w_list);
+    print_list(w_list);
 
-    delete_list(w_list1);
+    delete_list(w_list);
     return 0;
 }
 
@@ -135,9 +120,10 @@ void choose_sort_array_list(struct list * head)
         }
         if( nMin != i )
         {
-            swap_elements(head,i,nMin);
-            i=nMin;
-            print_list1(head);
+            //~ swap(i,nMin);
+            swap_elements2(i,nMin);
+            //~ i=nMin;
+            print_list(head);
             printf("i1=%s\n",i->next->word);
         }
     }
@@ -148,12 +134,12 @@ void choose_sort_array_list(struct list * head)
 /* Без заглавного элемента и без двойного указателя*/
 list* insert2(char* value,list *head)
 {
- list *new = calloc(1,sizeof(list));
+ list *res = (list*)calloc(1,sizeof(list));
  //~ new->id = value;
- memcpy(new->word, value, STR_SIZE);
- new->next = head;
- print_list1(new);
- return new;
+ memcpy(res->word, value, STR_SIZE);
+ res->next = head;
+ print_list(res);
+ return res;
 }
 
 struct list * add_to_list(char*origin, struct list * head)
@@ -168,6 +154,16 @@ struct list * res = (struct list*) malloc(sizeof(struct list));
     return res;
 }
 
+
+void swap_elements2(struct list * e1, struct list *e2)
+{
+char tmp[STR_SIZE];
+    strcpy(tmp,e1->word);
+    strcpy(e1->word,e2->word);
+    strcpy(e2->word,tmp);
+}
+
+
 void swap_elements (struct list * head, struct list * e1, struct list *e2)
 {
 char done=0;
@@ -175,25 +171,59 @@ list *tmp    = e1->next;
     e1->next = e2->next;
     e2->next = tmp;
 
-    for (tmp = head; done !=2 && tmp->next!=NULL; tmp = tmp->next )
+    for (tmp = head; done !=2 && tmp!=NULL; tmp = tmp->next )
     {
-        if(tmp->next == e1)
+        if(tmp == e1)
         {
-            tmp->next = e2;
+            tmp = e2;
             done++;
         }
-        else if(tmp->next == e2)
+        else if(tmp == e2)
         {
-            tmp->next = e1;
+            tmp = e1;
             done++;
         }
     }
 }
 
-void print_list1(list * head)
+void print_list(list * head)
 {
     for (list* i = head; i!=NULL; i=i->next)
         printf("%s ", i->word);
     putchar('\n');
 }
 
+void  swap(list *p1, list *p2) 
+{
+  list *pp1 = p1, *pp2 = 0;
+
+  if (p1 && p2 && // элементы присутствуют
+      p1 != p2 && // это разные элементы
+      !(p1->next->next == p1)) { // в списке больше двух
+    while (pp1->next != p1) {
+      if (pp1->next == p2)
+        pp2 = pp1;
+      pp1 = pp1->next;
+    }
+
+    if (pp2) {
+      if (p1->next == p2) {
+        p1->next = p2->next;
+        p2->next = p1;
+        pp1->next = p2;
+      } else if (p2->next == p1) {
+        p2->next = p1->next;
+        p1->next = p2;
+        pp2->next = p1;
+      } else {
+        list *t = p1->next;
+        p1->next = p2->next; 
+        p2->next = t;
+        pp1->next = p2; 
+        pp2->next = p1;
+      }
+    } else 
+      puts("p2 not in p1 list");
+  }
+
+}
