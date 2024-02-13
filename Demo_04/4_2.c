@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+//~ #define DEBUG
+
 #define max_stack 500
 typedef struct stack_t
 {
@@ -70,11 +72,10 @@ int push( unsigned int n)
     {
         st->numbers[st->size] = n;
         //~ unsigned int res = (st->size);
-        st->size ++;
 #ifdef DEBUG
         printf("Pushed %u, stack size = %d\n", st->numbers[st->size], st->size);
 #endif
-
+        st->size ++;
         return st->size;
     }
     else

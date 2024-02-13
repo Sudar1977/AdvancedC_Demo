@@ -1,0 +1,2 @@
+gcc -g -pg -std=c11  -ID:\geekbrains.ru\Projects\C\PDCurses-master -Wall  -c "%f" 
+gcc -g -pg  -no-pie -std=c11  -Wall  -o "%e" "%f" D:\geekbrains.ru\Projects\C\PDCurses-master\wincon\pdcurses.a -ID:\geekbrains.ru\Projects\C\PDCurses-master

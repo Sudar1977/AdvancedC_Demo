@@ -42,7 +42,13 @@ int n =  strlen(s);
 int max(int z[],int n)
 {
     int max=0;
- 
+     for(size_t i=0; i<n; i++)
+    {
+#ifdef DEBUG
+        printf("%d,",z[i]);
+#endif
+// inset code here
+    }
     return max;
 }
 

@@ -1,1 +1,0 @@
-objdump -d snake_2_menu_before.exe > snake_2_menu_before.s
