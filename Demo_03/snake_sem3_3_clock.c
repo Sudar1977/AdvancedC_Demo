@@ -1,16 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <curses.h>
+#include "curses/curses.h"
 #include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
 
-#define MIN_Y  2
+#define MIN_Y  3
 double DELAY = 0.1;
-enum {LEFT=1, UP, RIGHT, DOWN, STOP_GAME=KEY_F(10),CONTROLS=5};
-enum {MAX_TAIL_SIZE=100, START_TAIL_SIZE=3, MAX_FOOD_SIZE=20, FOOD_EXPIRE_SECONDS=10,SEED_NUMBER=3};
+_Bool PAUSE = false;
+enum {LEFT=1, UP, RIGHT, DOWN, STOP_GAME=KEY_F(10)};
+enum {MAX_TAIL_SIZE=100, START_TAIL_SIZE=3, MAX_FOOD_SIZE=20, FOOD_EXPIRE_SECONDS=10, SEED_NUMBER=3};
 
+#define CONTROLS 5 // число символов для управления
 // Здесь храним коды управления змейкой
 struct control_buttons
 {
@@ -18,13 +20,13 @@ struct control_buttons
     int up;
     int left;
     int right;
-}control_buttons;
+} control_buttons;
 
-struct control_buttons default_controls[CONTROLS] = {{KEY_DOWN, KEY_UP, KEY_LEFT, KEY_RIGHT},
-                                                    {'s', 'w', 'a', 'd'},
-                                                    {'S', 'W', 'A', 'D'},
-                                                    {'ы', 'ц', 'ф', 'в'},
-                                                    {'Ы', 'Ц', 'Ф', 'В'}};
+struct control_buttons default_controls[CONTROLS] = { {KEY_DOWN, KEY_UP, KEY_LEFT, KEY_RIGHT},
+                                                        {0x73, 0x77, 0x61, 0x64}, 
+                                                        {0x53, 0x57, 0x41, 0x44},
+                                                        {0xFFFFFFEB, 0xFFFFFFE6, 0xFFFFFFE4, 0xFFFFFFA2},
+                                                        {0xFFFFFF9B, 0xFFFFFF96, 0xFFFFFF94, 0xFFFFFF82} };
 
 /*
  Голова змейки содержит в себе
@@ -40,7 +42,7 @@ typedef struct snake_t
     int direction;
     size_t tsize;
     struct tail_t *tail;
-    struct control_buttons* controls;
+    struct control_buttons *controls;
 } snake_t;
 
 /*
@@ -69,6 +71,7 @@ void initTail(struct tail_t t[], size_t size)
         t[i]=init_t;
     }
 }
+
 void initHead(struct snake_t *head, int x, int y)
 {
     head->x = x;
@@ -78,13 +81,12 @@ void initHead(struct snake_t *head, int x, int y)
 
 void initSnake(snake_t *head, size_t size, int x, int y)
 {
-tail_t*  tail  = (tail_t*) malloc(MAX_TAIL_SIZE*sizeof(tail_t));
+    tail_t*  tail  = (tail_t*) malloc(MAX_TAIL_SIZE*sizeof(tail_t));
     initTail(tail, MAX_TAIL_SIZE);
     initHead(head, x, y);
     head->tail = tail; // прикрепляем к голове хвост
     head->tsize = size+1;
     head->controls = default_controls;
-    //~ head->controls = default_controls[1];
 }
 
 void initFood(struct food f[], size_t size)
@@ -108,63 +110,34 @@ void go(struct snake_t *head)
     switch (head->direction)
     {
         case LEFT:
-            if(head->x <= 0) // Циклическое движение, чтобы не
-// уходить за пределы экрана
+            if(head->x <= 0) // Циклическое движение, чтобы не уходить за пределы экрана
                 head->x = max_x;
             mvprintw(head->y, --(head->x), "%c", ch);
-        break;
+            break;
         case RIGHT:
-            if(head->x >= max_x)
+            if(head->x >= max_x) // Циклическое движение, чтобы не уходить за пределы экрана
                 head->x = 0;
             mvprintw(head->y, ++(head->x), "%c", ch);
-        break;
+            break;
         case UP:
-            if(head->y <= MIN_Y)
+            if(head->y <= MIN_Y) // Циклическое движение, чтобы не уходить за пределы экрана
                 head->y = max_y;
             mvprintw(--(head->y), head->x, "%c", ch);
-        break;
+            break;
         case DOWN:
-            if(head->y >= max_y)
+            if(head->y >= max_y) // Циклическое движение, чтобы не уходить за пределы экрана
                 head->y = MIN_Y;
             mvprintw(++(head->y), head->x, "%c", ch);
-        break;
+            break;
         default:
-        break;
+            break;
     }
-}
-
-void changeDirection(struct snake_t* snake, const int32_t key)
-{
-    for (int i = 0; i < CONTROLS; i++)
-    {
-        if (key == snake->controls[i].down)
-            snake->direction = DOWN;
-        else if (key == snake->controls[i].up)
-            snake->direction = UP;
-        else if (key == snake->controls[i].right)
-            snake->direction = RIGHT;
-        else if (key == snake->controls[i].left)
-            snake->direction = LEFT;
-    }
-}
-
-int checkDirection(snake_t* snake, int32_t key)
-{
-    for (int i = 0; i < CONTROLS; i++)
-        if((snake->controls[i].down  == key && snake->direction==UP)    ||
-           (snake->controls[i].up    == key && snake->direction==DOWN)  ||
-           (snake->controls[i].left  == key && snake->direction==RIGHT) ||
-           (snake->controls[i].right == key && snake->direction==LEFT))
-        {
-            return 0;
-        }
-    return 1;
-
+    refresh();
 }
 
 /*
  Движение хвоста с учетом движения головы
- */
+*/
 void goTail(struct snake_t *head)
 {
     char ch = '*';
@@ -179,9 +152,9 @@ void goTail(struct snake_t *head)
     head->tail[0].y = head->y;
 }
 
-/*
- Обновить/разместить текущее зерно на поле
- */
+/* 
+Обновить разместить текущее зерно на поле
+*/
 void putFoodSeed(struct food *fp)
 {
     int max_x=0, max_y=0;
@@ -197,9 +170,51 @@ void putFoodSeed(struct food *fp)
     mvprintw(fp->y, fp->x, "%s", spoint);
 }
 
+/* 
+функция проверки корректности выбранного направляения. 
+Служит для запрета двигаться сразу в противоположном направлении 
+*/
+int checkDirection(snake_t* snake, int32_t key, int32_t keySetting){
+    if((snake->direction == DOWN) != (key == snake->controls[keySetting].up))
+        return 1;
+    else if((snake->direction == UP) != (key == snake->controls[keySetting].down))
+        return 1;
+    else if((snake->direction == RIGHT) != (key == snake->controls[keySetting].left))
+        return 1;
+    else if((snake->direction == LEFT) != (key == snake->controls[keySetting].right))
+        return 1;
+
+    return 0;
+}
+
 /*
- Разместить еду на поле
- */
+Функция для выбора направления движения змейки
+*/
+void changeDirection(struct snake_t* snake, const int32_t key)
+{
+    for(int i = 0; i < CONTROLS; i++){
+        if (key == snake->controls[i].down){
+            if(checkDirection(snake, key, i))
+                snake->direction = DOWN;
+        }
+        else if (key == snake->controls[i].up){
+            if(checkDirection(snake, key, i))
+                snake->direction = UP;
+        }
+        else if (key == snake->controls[i].right){
+            if(checkDirection(snake, key, i))
+                snake->direction = RIGHT;
+        }
+        else if (key == snake->controls[i].left){
+            if(checkDirection(snake, key, i))
+                snake->direction = LEFT;
+        }
+    }
+}
+
+/*
+Разместить еду на поле
+*/
 void putFood(struct food f[], size_t number_seeds)
 {
     for(size_t i=0; i<number_seeds; i++)
@@ -233,13 +248,17 @@ _Bool haveEat(struct snake_t *head, struct food f[])
     return 0;
 }
 
+/* Функция вывода уровня игры (размера хвоста) */
+void printLevel(struct snake_t *head){
+    mvprintw(1, 0, "Level - %d ", head->tsize - START_TAIL_SIZE - 1);
+}
+
 /*
  Увеличение хвоста на 1 элемент
  */
-
 void addTail(struct snake_t *head)
 {
-    if(head == NULL || head->tsize>MAX_TAIL_SIZE)
+    if(head == NULL || head->tsize > MAX_TAIL_SIZE)
     {
         mvprintw(0, 0, "Can't add tail");
         return;
@@ -247,43 +266,79 @@ void addTail(struct snake_t *head)
     head->tsize++;
 }
 
+void setPause(int key){
+    // реализация установки на паузу
+    if(key == 'P' || key == 'p'){
+        if(PAUSE == 1){
+            PAUSE = 0;
+            mvprintw(2, (getmaxx(stdscr) - 7) / 2 ,"-------");
+        }
+        else {
+            PAUSE = 1;
+            mvprintw(2, (getmaxx(stdscr) - 7) / 2 ," PAUSE ");
+        }
+    }
+}
+
+/* Функция выводит окно окончания игры */
+void printExit(struct snake_t *head){
+    int maxx = getmaxx(stdscr);
+    mvprintw(9, (maxx - 13) / 2 , "*************");
+    mvprintw(10, (maxx - 11) / 2 , " END GAME! ");
+    mvprintw(11, (maxx - 11) / 2 , " Level - %d ", head->tsize - START_TAIL_SIZE - 1);
+    mvprintw(12, (maxx - 13) / 2 , "*************");
+}
+
 int main()
 {
-snake_t* snake = (snake_t*)malloc(sizeof(snake_t));
-
+    snake_t* snake = (snake_t*)malloc(sizeof(snake_t));
     initSnake(snake,START_TAIL_SIZE,10,10);
     initscr();
     keypad(stdscr, TRUE); // Включаем F1, F2, стрелки и т.д.
     raw();                // Откдючаем line buffering
     noecho();            // Отключаем echo() режим при вызове getch
     curs_set(FALSE);    //Отключаем курсор
-    mvprintw(0, 0,"Use arrows for control. Press 'F10' for EXIT");
+    mvprintw(0, 0," Use arrows for control. Press 'F10' for EXIT");
     timeout(0);    //Отключаем таймаут после нажатия клавиши в цикле
     initFood(food, MAX_FOOD_SIZE);
     putFood(food, SEED_NUMBER);// Кладем зерна
     int key_pressed=0;
+
+    for(int i = 0; i < getmaxx(stdscr); i++)
+        mvprintw(2, i,"-");
+
     while( key_pressed != STOP_GAME )
     {
         clock_t begin = clock();
         key_pressed = getch(); // Считываем клавишу
-        go(snake);
-        goTail(snake);
-        if (checkDirection(snake,key_pressed))
-        {
+        mvprintw(1, 11," | key - %x , delay - %f", key_pressed, DELAY); // вывод служебной информации
+
+        setPause(key_pressed); // проверка на нажатие кнопки паузы
+
+        if(!PAUSE){
+            go(snake);
+            goTail(snake);
             changeDirection(snake, key_pressed);
+            refreshFood(food, SEED_NUMBER);// Обновляем еду
+            if (haveEat(snake,food))
+            {
+                DELAY -= 0.001; // повышение скорости движения змейки при съедании еды
+                addTail(snake);
+            }
+            refresh();
+            printLevel(snake);
+            while ((double)(clock() - begin) / CLOCKS_PER_SEC < DELAY) {} // Задержка при отрисовке 
         }
-        refreshFood(food, SEED_NUMBER);// Обновляем еду
-        if (haveEat(snake,food))
-        {
-            addTail(snake);
-        }
-        refresh();//Обновление экрана, вывели кадр анимации
-        while ((double)(clock() - begin)/CLOCKS_PER_SEC<DELAY)// Задержка при отрисовке
-        {}
     }
+
+    // окончание игры
+    while( key_pressed ){
+        key_pressed = getch();
+        printExit(snake);
+    }
+
     free(snake->tail);
     free(snake);
     endwin(); // Завершаем режим curses mod
     return 0;
 }
-
